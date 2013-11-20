@@ -118,6 +118,15 @@ def forward_algorithm(theta, observations):
 
     i.e. f_t(k) can be accessed by forward_table[k][t]
     """
+    states = theta.m.keys()
+    for t in len(range(observations)):
+        for k in states:
+            if t == 0:
+                forward_table[k] = [theta.e[k][observations[t]] * theta.m[k]]
+            else:
+                forward_table[k].append(theta.e[k][observations[t]] *
+                    sum([forward_table[i][t-1] * theta.a[i][k] for i in states])
+
     return forward_table
 
 
@@ -132,6 +141,19 @@ def backward_algorithm(theta, observations):
     Would recommend initializing the entire length of the array first since
     you're working backwards.
     """
+    states = theta.m.keys()
+    for k in states:
+        backward_table = [0] * len(range(observations))
+
+    for t in reversed(len(range(observations))):
+        for k in states:
+            if t == len(observations) - 1:
+                backward_table[k][t] = 1
+            else:
+                backward_table[k][t] = sum([theta.a[k][j] *
+                    theta.e[j][observations[t + 1]] *
+                    backward_table[j][t + 1] for j in states])
+
     return backward_table
 
 
@@ -172,7 +194,7 @@ class EM(object):
 
 
 class Decoding(object):
-    
+
     def __init__(self, observations, params):
         self.x = observations
         self.theta = params
