@@ -11,6 +11,7 @@ from collections import namedtuple
 # Where m: P(Q=k), a: transition prob, e: emission prob
 Theta = namedtuple('Theta', ['m', 'a', 'e'])
 
+
 INITIAL_MU_PARAMS = Theta(
     # Marginal Probabilities
     {
@@ -35,6 +36,17 @@ INITIAL_MU_PARAMS = Theta(
     }
 )
 
+"""
+Access to the parameter of Theta (marginal, transition, emission) can be
+done with the following:
+>>> theta = INITIAL_MU_PARAMS
+>>> theta.m[1]  # marginal probability of state k=1, Pr(Q_i = k)
+0.603154
+>>> theta.a[2][1]  # transition probability from 2 to 1, Pr(Q_j = 1 | Q_i = 2)
+0.000128404
+>>> theta.e[3]['D']  # emission probability of different char while in state 3
+0.00415567
+"""
 
 def read_fasta_sequences_to_str(filename):
     """
@@ -96,12 +108,30 @@ def observe_differences(seq1, seq2):
 def forward_algorithm(theta, observations):
     """Performs forward algorithm for computing table values of P( x , q )."""
     forward_table = {}
+    """
+    TODO(kevintee):
+
+    See example on line 39 to see how to access `theta`.
+
+    forward_table should be a dict with the keys being the state of Q, and the
+    value being a list of forward values with length up to the observation seq.
+
+    i.e. f_t(k) can be accessed by forward_table[k][t]
+    """
     return forward_table
 
 
 def backward_algorithm(theta, observations):
     """Performs backward algorithm for computing table values of P( x | q )."""
     backward_table = {}
+    """
+    TODO(kevintee):
+    See forward_algorithm comment. Same biznis.
+    i.e. b_t(k) can be accessed by backward_table[k][t]
+
+    Would recommend initializing the entire length of the array first since
+    you're working backwards.
+    """
     return backward_table
 
 
