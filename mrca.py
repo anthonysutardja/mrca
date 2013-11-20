@@ -8,16 +8,61 @@ Kevin Tee
 """
 
 
-def read_fasta_sequence_to_str(filename):
+def read_fasta_sequences_to_str(filename):
     """
-    Reads a FASTA formatted file to a string.
+    Reads a FASTA formatted file to a list of sequences.
 
-    Returns a tuple containing the sequence's name and the sequence.
+    Returns a list of sequences. (should be just 2)
     """
     with open(filename) as f:
         lines = [line.strip() for line in f.readlines()]
-        sequence_name = lines.pop(0).replace('>', '')
-        return (sequence_name, ''.join(lines))
+        sequences = []
+        text = ''
+
+        for line in lines:
+            if line[0] == '>':
+                if len(text) > 0:
+                    sequences.append(text)
+                text = ''
+            else:
+                if len(line):
+                    text += line
+        if len(text) > 0:
+            sequences.append(text)
+
+        return sequences
+
+
+def observe_differences(seq1, seq2):
+    """
+    Checks if each index of seq1 and seq2 are the same. If it is the same, then
+    we indicate it with a 1, otherwise 0.
+
+    Returns a list of difference observations.
+    >>> observe_differences('hello', 'jello')
+    [0, 1, 1, 1, 1]
+    >>> observe_differences('abc', 'abcdefg')
+    [1, 1, 1, 0, 0, 0, 0]
+    """
+    i, j = 0, 0
+    observations = []
+    while i < len(seq1) and j < len(seq2):
+        if seq1[i] == seq2[j]:
+            observations.append(1)
+        else:
+            observations.append(0)
+        i += 1
+        j += 1
+
+    # process tails
+    while i < len(seq1):
+        observations.append(0)
+        i += 1
+    while j < len(seq2):
+        observations.append(0)
+        j += 1
+
+    return observations
 
 
 def forward_algorithm(theta, observations):
@@ -36,7 +81,7 @@ class EM(object):
 
     def __init__(self, observations, initial_params=None, thresh=0.001):
         self.x = observations
-        self.thresh = 0.001
+        self.thresh = thresh
         # let self.theta be a dictionary of params
         self.theta = initial_params
 
