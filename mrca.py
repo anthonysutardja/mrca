@@ -9,6 +9,9 @@ Kevin Tee
 from params import Theta
 from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
 
+from math import e
+from math import log
+
 """
 Access to the parameter of Theta (marginal, transition, emission) can be
 done with the following:
@@ -95,12 +98,14 @@ def forward_algorithm(theta, observations):
     for t in len(range(observations)):
         for k in states:
             if t == 0:
-                forward_table[k] = [theta.e[k][observations[t]] * theta.m[k]]
+                forward_table[k] = [log(theta.e[k][observations[t]] + \
+                    log(theta.m[k]))]
             else:
-                pass
-                forward_table[k].append(theta.e[k][observations[t]] * \
-                    sum([forward_table[i][t-1] * theta.a[i][k] for i in states])
-                )
+                offset = max([forward_table[i][t - 1] for i in states])
+                forward_table[k].append(log(theta.e[k][observations[t]]) + \
+                    offset + log(sum([e**(forward_table[i][t - 1] - offset) * \
+                    theta.a[i][k] for i in states])))
+
     return forward_table
 
 
@@ -122,11 +127,12 @@ def backward_algorithm(theta, observations):
     for t in reversed(len(range(observations))):
         for k in states:
             if t == len(observations) - 1:
-                backward_table[k][t] = 1
+                backward_table[k][t] = 0
             else:
-                backward_table[k][t] = sum([theta.a[k][j] *
-                    theta.e[j][observations[t + 1]] *
-                    backward_table[j][t + 1] for j in states])
+                offset = max([backward_table[i][t + 1] for i in states])
+                backward_table[k][t] = offset + log(sum([theta.a[k][j] * \
+                    theta.e[j][observations[t + 1]] * \
+                    e**(backward_table[j][t + 1] - offset) for j in states]))
 
     return backward_table
 
