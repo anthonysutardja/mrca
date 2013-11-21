@@ -173,13 +173,13 @@ class EM(object):
 
         # perform first iteration manually
         old_theta = self.theta
-        self.theta = iteration()
+        self.theta = self.iteration()
         i += 1
 
         # iterate until improvement meets threshold
         while check_improvement(self.theta, old_theta) and i < self.max_iter:
             old_theta = self.theta
-            self.theta = iteration()
+            self.theta = self.iteration()
             i += 1
 
         return self.theta
@@ -189,7 +189,7 @@ class EM(object):
                 - self.calculate_likelihood(old_theta, self.x)) > self.thresh
 
     def iteration(self):
-        """Generate a new theta. """
+        """Generate a new theta."""
         self.process_forward_algorithm()
         self.process_backward_algorithm()
 
@@ -199,6 +199,10 @@ class EM(object):
         return theta_prime
 
     def calculate_likelihood(self, theta):
+        """Return the log-likelihood of the data given theta."""
+        forward = forward_algorithm(theta, self.x)
+
+        # do something with logs....
         return 0.0
 
     def process_forward_algorithm(self):
