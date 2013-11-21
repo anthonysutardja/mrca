@@ -159,16 +159,19 @@ def backward_algorithm(theta, observations):
 
 class EM(object):
 
-    def __init__(self, observations, initial_params=None, thresh=0.001):
-        self.x = observations
+    def __init__(self, observ, init_params=None, thresh=1e-5, max_iter=100):
+        self.x = observ
         self.thresh = thresh
         # let self.theta be a dictionary of params
-        self.theta = initial_params
+        self.theta = init_params
+        self.max_iter = max_iter
 
     def estimate_params(self):
         # perform the iteration until some value
-        while True:
+        i = 0
+        while True and i < self.max_iter:
             self.iteration()
+            i += 1
 
         return self.theta
 
@@ -179,6 +182,9 @@ class EM(object):
         # do all the actual crap here...
 
         pass
+
+    def calcuate_likelihood(self, theta):
+        return 0.0
 
     def process_forward_algorithm(self):
         self.forward = forward_algorithm(self.theta, self.x)
