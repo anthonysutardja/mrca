@@ -82,18 +82,9 @@ def observe_differences(seq1, seq2):
 
 
 def forward_algorithm(theta, observations):
-    """Performs forward algorithm for computing table values of P( x , q )."""
+    """Performs forward alg for computing table values of log P( x , q )."""
     forward_table = {}
-    """
-    TODO(kevintee):
 
-    See example on line 39 to see how to access `theta`.
-
-    forward_table should be a dict with the keys being the state of Q, and the
-    value being a list of forward values with length up to the observation seq.
-
-    i.e. f_t(k) can be accessed by forward_table[k][t]
-    """
     states = theta.m.keys()
     for t in len(range(observations)):
         for k in states:
@@ -110,16 +101,9 @@ def forward_algorithm(theta, observations):
 
 
 def backward_algorithm(theta, observations):
-    """Performs backward algorithm for computing table values of P( x | q )."""
+    """Performs backward alg for computing table values of log P( x | q )."""
     backward_table = {}
-    """
-    TODO(kevintee):
-    See forward_algorithm comment. Same biznis.
-    i.e. b_t(k) can be accessed by backward_table[k][t]
-
-    Would recommend initializing the entire length of the array first since
-    you're working backwards.
-    """
+    
     states = theta.m.keys()
     for k in states:
         backward_table = [0] * len(range(observations))
