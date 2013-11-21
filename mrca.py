@@ -124,9 +124,10 @@ def forward_algorithm(theta, observations):
             if t == 0:
                 forward_table[k] = [theta.e[k][observations[t]] * theta.m[k]]
             else:
-                forward_table[k].append(theta.e[k][observations[t]] *
+                pass
+                forward_table[k].append(theta.e[k][observations[t]] * \
                     sum([forward_table[i][t-1] * theta.a[i][k] for i in states])
-
+                )
     return forward_table
 
 
@@ -169,21 +170,35 @@ class EM(object):
     def estimate_params(self):
         # perform the iteration until some value
         i = 0
-        while True and i < self.max_iter:
-            self.iteration()
+
+        # perform first iteration manually
+        old_theta = self.theta
+        self.theta = iteration()
+        i += 1
+
+        # iterate until improvement meets threshold
+        while check_improvement(self.theta, old_theta) and i < self.max_iter:
+            old_theta = self.theta
+            self.theta = iteration()
             i += 1
 
         return self.theta
 
+    def check_improvement(self, new_theta, old_theta):
+        return (self.calculate_likelihood(new_theta, self.x) \
+                - self.calculate_likelihood(old_theta, self.x)) > self.thresh
+
     def iteration(self):
+        """Generate a new theta. """
         self.process_forward_algorithm()
         self.process_backward_algorithm()
 
+        theta_prime = {}
         # do all the actual crap here...
 
-        pass
+        return theta_prime
 
-    def calcuate_likelihood(self, theta):
+    def calculate_likelihood(self, theta):
         return 0.0
 
     def process_forward_algorithm(self):
