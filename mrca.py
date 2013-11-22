@@ -12,6 +12,8 @@ from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
 from math import e
 from math import log
 
+from util import time_it
+
 """
 Access to the parameter of Theta (marginal, transition, emission) can be
 done with the following:
@@ -49,6 +51,7 @@ def read_fasta_sequences_to_str(filename):
         return sequences
 
 
+@time_it
 def observe_differences(seq1, seq2):
     """
     Checks if each index of seq1 and seq2 are the same. If it is the same, then
@@ -81,6 +84,7 @@ def observe_differences(seq1, seq2):
     return observations
 
 
+@time_it
 def forward_algorithm(theta, observations):
     """
     Performs forward alg for computing table values of log P( x , q ).
@@ -104,6 +108,7 @@ def forward_algorithm(theta, observations):
     return forward_table
 
 
+@time_it
 def backward_algorithm(theta, observations):
     """Performs backward alg for computing table values of log P( x | q )."""
     backward_table = {}
@@ -146,7 +151,7 @@ class EM(object):
 
         # iterate until improvement meets threshold
         while self.check_improvement(self.lhood, old_lhood) and i < self.max_iter:
-            print ' ' + str(i) + ' ' + str(self.lhood)
+            print ' ' + str(i) + '    ' + str(self.lhood)
             old_lhood = self.lhood
 
             # self.iteration() will always have access to the correct
@@ -200,10 +205,12 @@ class EM(object):
 
         return Theta(marginal, transition, emission)
 
+    @time_it
     def calculate_marginal_for_state(self, k):
         """Return the marginal expectation for being in state k given theta."""
         return e**(self.f(k)[0] + self.b(k)[0] - self.lhood)
 
+    @time_it
     def calculate_transition(self, i, j):
         """Return the transition expectation for A_{ij} given theta."""
         num_samp = len(self.x) - 1
@@ -215,6 +222,7 @@ class EM(object):
         term = log(sum([inside(t) for t in range(num_samp)])) + D - self.lhood
         return self.theta.a[i][j] * (e**term)
 
+    @time_it
     def calculate_emission(self, k, sigma):
         D = max([self.f(k)[t] + self.b(k)[t] for t in range(len(self.x)) \
                 if self.x[t] == sigma])
