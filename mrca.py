@@ -82,7 +82,11 @@ def observe_differences(seq1, seq2):
 
 
 def forward_algorithm(theta, observations):
-    """Performs forward alg for computing table values of log P( x , q )."""
+    """
+    Performs forward alg for computing table values of log P( x , q ).
+
+    i.e. f_t(k) can be accessed by forward_table[k][t]
+    """
     forward_table = {}
 
     states = theta.m.keys()
@@ -135,38 +139,70 @@ class EM(object):
         i = 0
 
         # perform first iteration manually
-        old_theta = self.theta
-        self.theta = self.iteration()
-        i += 1
+        old_lhood = float('-inf')
+        self.process_forward_algorithm()
+        self.process_backward_algorithm()
+        self.lhood = self.calculate_likelihood()
 
         # iterate until improvement meets threshold
-        while check_improvement(self.theta, old_theta) and i < self.max_iter:
-            old_theta = self.theta
+        while check_improvement(self.lhood, old_lhood) and i < self.max_iter:
+            old_lhood = self.lhood
+
+            # self.iteration() will always have access to the correct
+            # forward and backward tables based on the current self.theta
             self.theta = self.iteration()
+
+            # Update forward and backward tables
+            self.process_forward_algorithm()
+            self.process_backward_algorithm()
+            self.lhood = self.calculate_likelihood()
             i += 1
 
         return self.theta
 
-    def check_improvement(self, new_theta, old_theta):
-        return (self.calculate_likelihood(new_theta, self.x) \
-                - self.calculate_likelihood(old_theta, self.x)) > self.thresh
+    def check_improvement(self, new_lhood, old_lhood):
+        return new_lhood - old_lhood > self.thresh
 
     def iteration(self):
         """Generate a new theta."""
-        self.process_forward_algorithm()
-        self.process_backward_algorithm()
-
         theta_prime = {}
+
+        states = self.theta.m.keys()
+        
         # do all the actual crap here...
+        marginal = {}
+        for k in states:
+            marginal[k] = self.calculate_marginal_for_state(k)
+
+        transition = {}
+        for i in states:
+            for j in states:
+                pass
+
+        emission = {}
+        symbols = ['I', 'D']
+        for k in states:
+            for symbol in symbols:
+                pass
+        # need to normalize
 
         return theta_prime
 
-    def calculate_likelihood(self, theta):
-        """Return the log-likelihood of the data given theta."""
-        forward = forward_algorithm(theta, self.x)
+    def calculate_marginal_for_state(self, k):
+        return e**(self.f(k)[0] + self.b(k)[0] - self.likelihood)
 
-        # do something with logs....
-        return 0.0
+    def calculate_likelihood(self, theta=None):
+        """Return the log-likelihood of the data given theta."""
+        if theta:
+            forward = forward_algorithm(theta, self.x)
+        else:
+            theta = self.theta
+            forward = self.forward
+
+        states = theta.m.keys()
+        D = max([forward[k][-1] for k in states])
+
+        return log(sum([e**(forward[k][-1] - D) for k in states])) + D
 
     def process_forward_algorithm(self):
         self.forward = forward_algorithm(self.theta, self.x)
@@ -174,11 +210,11 @@ class EM(object):
     def process_backward_algorithm(self):
         self.backward = backward_algorithm(self.theta, self.x)
 
-    def get_forward_value(self, idx, state):
-        return self.forward[idx][state]
+    def f(self, state):
+        return self.forward[state]
 
-    def get_backward_value(self, idx, state):
-        return self.backward[idx][state]
+    def b(self, idx, state):
+        return self.backward[state]
 
 
 class Decoding(object):
