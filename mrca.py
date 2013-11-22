@@ -146,7 +146,7 @@ class EM(object):
 
         # iterate until improvement meets threshold
         while self.check_improvement(self.lhood, old_lhood) and i < self.max_iter:
-            print self.lhood
+            print ' ' + str(i) + ' ' + str(self.lhood)
             old_lhood = self.lhood
 
             # self.iteration() will always have access to the correct
@@ -262,8 +262,16 @@ class Decoding(object):
 
 
 def main():
-    pass
+    print '================================='
+    print ' Loading data...'
+    sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
+    obs = observe_differences(sequences[0], sequences[1])
+    print ' Running EM for mu dataset...'
+    em = EM(obs, INITIAL_MU_PARAMS)
+    theta = em.estimate_params()
+    print theta
+    print '================================='
 
 
 if __name__ == '__main__':
-    main()
+    pass
