@@ -90,11 +90,11 @@ def forward_algorithm(theta, observations):
     forward_table = {}
 
     states = theta.m.keys()
-    for t in len(range(observations)):
+    for t in range(len(observations)):
         for k in states:
             if t == 0:
-                forward_table[k] = [log(theta.e[k][observations[t]] + \
-                    log(theta.m[k]))]
+                forward_table[k] = [log(theta.e[k][observations[t]]) + \
+                    log(theta.m[k])]
             else:
                 offset = max([forward_table[i][t - 1] for i in states])
                 forward_table[k].append(log(theta.e[k][observations[t]]) + \
@@ -110,9 +110,9 @@ def backward_algorithm(theta, observations):
     
     states = theta.m.keys()
     for k in states:
-        backward_table = [0] * len(range(observations))
+        backward_table[k] = [0] * len(observations)
 
-    for t in reversed(len(range(observations))):
+    for t in reversed(range(len(observations))):
         for k in states:
             if t == len(observations) - 1:
                 backward_table[k][t] = 0
@@ -127,7 +127,7 @@ def backward_algorithm(theta, observations):
 
 class EM(object):
 
-    def __init__(self, observ, init_params=None, thresh=1e-5, max_iter=100):
+    def __init__(self, observ, init_params, thresh=1e-5, max_iter=100):
         self.x = observ
         self.thresh = thresh
         # let self.theta be a dictionary of params
@@ -145,7 +145,8 @@ class EM(object):
         self.lhood = self.calculate_likelihood()
 
         # iterate until improvement meets threshold
-        while check_improvement(self.lhood, old_lhood) and i < self.max_iter:
+        while self.check_improvement(self.lhood, old_lhood) and i < self.max_iter:
+            print self.lhood
             old_lhood = self.lhood
 
             # self.iteration() will always have access to the correct
@@ -165,19 +166,19 @@ class EM(object):
 
     def iteration(self):
         """Generate a new theta."""
-        theta_prime = {}
-
         states = self.theta.m.keys()
         
         # do all the actual crap here...
         marginal = {}
         for k in states:
             marginal[k] = self.calculate_marginal_for_state(k)
+        marginal = self.theta.m
 
         transition = {}
         for i in states:
             for j in states:
                 pass
+        transition = self.theta.a
 
         emission = {}
         symbols = ['I', 'D']
@@ -185,11 +186,12 @@ class EM(object):
             for symbol in symbols:
                 pass
         # need to normalize
+        emission = self.theta.e
 
-        return theta_prime
+        return Theta(marginal, transition, emission)
 
     def calculate_marginal_for_state(self, k):
-        return e**(self.f(k)[0] + self.b(k)[0] - self.likelihood)
+        return e**(self.f(k)[0] + self.b(k)[0] - self.lhood)
 
     def calculate_likelihood(self, theta=None):
         """Return the log-likelihood of the data given theta."""
@@ -213,7 +215,7 @@ class EM(object):
     def f(self, state):
         return self.forward[state]
 
-    def b(self, idx, state):
+    def b(self, state):
         return self.backward[state]
 
 
