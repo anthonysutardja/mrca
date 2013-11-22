@@ -172,26 +172,55 @@ class EM(object):
         marginal = {}
         for k in states:
             marginal[k] = self.calculate_marginal_for_state(k)
-        marginal = self.theta.m
+        # need to normalize
+        marginal_norm = sum([marginal[k] for k in states])
+        for state, val in marginal.items():
+            marginal[state] = val / marginal_norm
 
         transition = {}
         for i in states:
+            transition[i] = {}
             for j in states:
-                pass
-        transition = self.theta.a
+                transition[i][j] = self.calculate_transition(i, j)
+            # need to normalize
+            trans_norm = sum([transition[i][k] for k in states])
+            for j, val in transition[i].items():
+                transition[i][j] = val / trans_norm
 
         emission = {}
-        symbols = ['I', 'D']
+        symbols = self.theta.e[states[0]].keys()
         for k in states:
+            emission[k] = {}
             for symbol in symbols:
-                pass
-        # need to normalize
-        emission = self.theta.e
+                emission[k][symbol] = self.calculate_emission(k, symbol)
+            # need to normalize
+            emission_norm = sum([emission[k][s] for s in symbols])
+            for symbol, val in emission[k].items():
+                emission[k][symbol] = val / emission_norm
 
         return Theta(marginal, transition, emission)
 
     def calculate_marginal_for_state(self, k):
+        """Return the marginal expectation for being in state k given theta."""
         return e**(self.f(k)[0] + self.b(k)[0] - self.lhood)
+
+    def calculate_transition(self, i, j):
+        """Return the transition expectation for A_{ij} given theta."""
+        num_samp = len(self.x) - 1
+
+        D = max([self.f(i)[t] + self.b(j)[t+1] for t in range(num_samp)])
+        inside = lambda s: (e**(self.f(i)[s] + self.b(j)[s + 1] - D)) * \
+                    self.theta.e[j][self.x[s + 1]]
+
+        term = log(sum([inside(t) for t in range(num_samp)])) + D - self.lhood
+        return self.theta.a[i][j] * (e**term)
+
+    def calculate_emission(self, k, sigma):
+        D = max([self.f(k)[t] + self.b(k)[t] for t in range(len(self.x)) \
+                if self.x[t] == sigma])
+        term = log(sum([e**(self.f(k)[t] + self.b(k)[t] - D) \
+                    for t in range(len(self.x)) if self.x[t] == sigma]))
+        return e**(term + D - self.lhood)
 
     def calculate_likelihood(self, theta=None):
         """Return the log-likelihood of the data given theta."""
