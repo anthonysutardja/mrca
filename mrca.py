@@ -11,37 +11,11 @@ from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
 
 from math import e
 from math import log
-from multiprocessing import Pool
+from multiprocessing import Pool, Array
 
 from util import time_it
-#def _pickle_method(method):
-#    func_name = method.im_func.__name__
-#    obj = method.im_self
-#    cls = method.im_class
-#    return _unpickle_method, (func_name, obj, cls)
-#def _pickle_method(method):
-#    func_name = method.im_func.__name__
-#    obj = method.im_self
-#    cls = method.im_class
-#    if func_name.startswith('__') and not func_name.endswith('__'):
-#        cls_name = cls.__name__.lstrip('_')
-#        if cls_name:
-#            func_name = '_' + cls_name + func_name
-#    return _unpickle_method, (func_name, obj, cls)
-#
-#def _unpickle_method(func_name, obj, cls):
-#    for cls in cls.mro():
-#        try:
-#            func = cls.__dict__[func_name]
-#        except KeyError:
-#            pass
-#        else:
-#            break
-#    return func.__get__(obj, cls)
-#
-#import copy_reg
-#import types
-#copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
+
+# Necessary for allowing pickling of instance methods in concurrent processes
 import copy_reg
 import types
 
@@ -61,15 +35,6 @@ done with the following:
 >>> theta.e[3]['D']  # emission probability of different char while in state 3
 0.00415567
 """
-
-pool = Pool(processes=4)
-
-def dummy():
-    return
-
-# warm up
-for i in range(4):
-    pool.apply_async(dummy, ())
 
 def read_fasta_sequences_to_str(filename):
     """
@@ -177,7 +142,7 @@ def backward_algorithm(theta, observations):
 
 class EM(object):
 
-    def __init__(self, observ, init_params, thresh=1e-5, max_iter=2):
+    def __init__(self, observ, init_params, thresh=1e-3, max_iter=50):
         self.x = observ
         self.thresh = thresh
         # let self.theta be a dictionary of params
@@ -192,6 +157,7 @@ class EM(object):
         old_lhood = float('-inf')
         self.process_forward_algorithm()
         self.process_backward_algorithm()
+        self.join_forward_backward()
         self.lhood = self.calculate_likelihood()
 
         # iterate until improvement meets threshold
@@ -206,6 +172,7 @@ class EM(object):
             # Update forward and backward tables
             self.process_forward_algorithm()
             self.process_backward_algorithm()
+            self.join_forward_backward()
             self.lhood = self.calculate_likelihood()
             i += 1
 
@@ -307,10 +274,17 @@ class EM(object):
         return log(sum([e**(forward[k][-1] - D) for k in states])) + D
 
     def process_forward_algorithm(self):
+        #self.async_forward = pool.apply_async(
+        #    forward_algorithm, (self.theta, self.x)
+        #)
         self.forward = forward_algorithm(self.theta, self.x)
 
     def process_backward_algorithm(self):
         self.backward = backward_algorithm(self.theta, self.x)
+
+    def join_forward_backward(self):
+        #self.forward = self.async_forward.get()
+        pass
 
     def f(self, state):
         return self.forward[state]
@@ -345,4 +319,4 @@ def main():
 
 
 if __name__ == '__main__':
-    pass
+    pool = Pool(processes=3)
