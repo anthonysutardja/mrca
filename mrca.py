@@ -36,6 +36,17 @@ done with the following:
 0.00415567
 """
 
+STATE_TO_TIME = {
+    1: 0.32,
+    2: 1.75,
+    3: 4.54,
+    4: 9.40
+}
+
+
+def convert_state_seq_to_time_seq(q_sequence):
+    return [STATE_TO_TIME[q] for q in q_sequence]
+
 def read_fasta_sequences_to_str(filename):
     """
     Reads a FASTA formatted file to a list of sequences.
@@ -348,13 +359,21 @@ def run_mu_estimation():
     print theta
     print '================================='
 
-def run_mu_decoding():
-    print '================================='
+def run_mu_initial_decoding():
     sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
     obs = observe_differences(sequences[0], sequences[1])
     decode = Decoding(obs, INITIAL_MU_PARAMS)
     return decode.posterior()
 
+def run_mu_estimate_decoding():
+    sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
+    obs = observe_differences(sequences[0], sequences[1])
+    em = EM(obs, INITIAL_MU_PARAMS, max_iter=10)
+    theta = em.estimate_params()
+    decode = Decoding(obs, theta)
+    return decode.posterior()
+
+pool = Pool(processes=3)
 
 if __name__ == '__main__':
-    pool = Pool(processes=3)
+    pass
