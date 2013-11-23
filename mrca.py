@@ -175,20 +175,22 @@ class EM(object):
         
         # do all the actual crap here...
         marginal = {}
+        marginal_norm = 0
         for k in states:
             marginal[k] = self.calculate_marginal_for_state(k)
+            marginal_norm += marginal[k]
         # need to normalize
-        marginal_norm = sum([marginal[k] for k in states])
         for state, val in marginal.items():
             marginal[state] = val / marginal_norm
 
         transition = {}
         for i in states:
             transition[i] = {}
+            trans_norm = 0
             for j in states:
                 transition[i][j] = self.calculate_transition(i, j)
+                trans_norm += transition[i][j]
             # need to normalize
-            trans_norm = sum([transition[i][k] for k in states])
             for j, val in transition[i].items():
                 transition[i][j] = val / trans_norm
 
@@ -196,10 +198,11 @@ class EM(object):
         symbols = self.theta.e[states[0]].keys()
         for k in states:
             emission[k] = {}
+            emission_norm = 0
             for symbol in symbols:
                 emission[k][symbol] = self.calculate_emission(k, symbol)
+                emission_norm += emission[k][symbol]
             # need to normalize
-            emission_norm = sum([emission[k][s] for s in symbols])
             for symbol, val in emission[k].items():
                 emission[k][symbol] = val / emission_norm
 
