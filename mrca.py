@@ -11,8 +11,44 @@ from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
 
 from math import e
 from math import log
+from multiprocessing import Pool
 
-from util import time_it, Pool
+from util import time_it
+#def _pickle_method(method):
+#    func_name = method.im_func.__name__
+#    obj = method.im_self
+#    cls = method.im_class
+#    return _unpickle_method, (func_name, obj, cls)
+#def _pickle_method(method):
+#    func_name = method.im_func.__name__
+#    obj = method.im_self
+#    cls = method.im_class
+#    if func_name.startswith('__') and not func_name.endswith('__'):
+#        cls_name = cls.__name__.lstrip('_')
+#        if cls_name:
+#            func_name = '_' + cls_name + func_name
+#    return _unpickle_method, (func_name, obj, cls)
+#
+#def _unpickle_method(func_name, obj, cls):
+#    for cls in cls.mro():
+#        try:
+#            func = cls.__dict__[func_name]
+#        except KeyError:
+#            pass
+#        else:
+#            break
+#    return func.__get__(obj, cls)
+#
+#import copy_reg
+#import types
+#copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
+import copy_reg
+import types
+
+def reduce_method(m):
+    return (getattr, (m.__self__, m.__func__.__name__))
+
+copy_reg.pickle(types.MethodType, reduce_method)
 
 """
 Access to the parameter of Theta (marginal, transition, emission) can be
@@ -26,7 +62,14 @@ done with the following:
 0.00415567
 """
 
-pool = Pool(1)
+pool = Pool(processes=4)
+
+def dummy():
+    return
+
+# warm up
+for i in range(4):
+    pool.apply_async(dummy, ())
 
 def read_fasta_sequences_to_str(filename):
     """
@@ -149,7 +192,6 @@ class EM(object):
         old_lhood = float('-inf')
         self.process_forward_algorithm()
         self.process_backward_algorithm()
-        self.table_join()
         self.lhood = self.calculate_likelihood()
 
         # iterate until improvement meets threshold
@@ -164,7 +206,6 @@ class EM(object):
             # Update forward and backward tables
             self.process_forward_algorithm()
             self.process_backward_algorithm()
-            self.table_join()
             self.lhood = self.calculate_likelihood()
             i += 1
 
@@ -209,11 +250,17 @@ class EM(object):
 
         emission = {}
         symbols = self.theta.e[states[0]].keys()
+        async_results = []
+        for k in states:
+            for symbol in symbols:
+                async_results.append(
+                    pool.apply_async(self.calculate_emission, (k, symbol))
+                )
         for k in states:
             emission[k] = {}
             emission_norm = 0
             for symbol in symbols:
-                emission[k][symbol] = self.calculate_emission(k, symbol)
+                emission[k][symbol] = async_results.pop(0).get()
                 emission_norm += emission[k][symbol]
             # need to normalize
             for symbol, val in emission[k].items():
@@ -260,18 +307,10 @@ class EM(object):
         return log(sum([e**(forward[k][-1] - D) for k in states])) + D
 
     def process_forward_algorithm(self):
-        self.async_forward = pool.apply_async(
-            forward_algorithm, (self.theta, self.x)
-        )
+        self.forward = forward_algorithm(self.theta, self.x)
 
     def process_backward_algorithm(self):
-        self.async_backward = pool.apply_async(
-            backward_algorithm, (self.theta, self.x)
-        )
-
-    def table_join(self):
-        self.forward = self.async_forward.get()
-        self.backward = self.async_backward.get()
+        self.backward = backward_algorithm(self.theta, self.x)
 
     def f(self, state):
         return self.forward[state]
