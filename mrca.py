@@ -8,13 +8,11 @@ Kevin Tee
 """
 from params import Theta
 from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
-from threading import Thread
-from multiprocessing.pool import ThreadPool
 
 from math import e
 from math import log
 
-from util import time_it
+from util import time_it, Pool
 
 """
 Access to the parameter of Theta (marginal, transition, emission) can be
@@ -28,7 +26,7 @@ done with the following:
 0.00415567
 """
 
-pool = ThreadPool(processes=1)
+pool = Pool(1)
 
 def read_fasta_sequences_to_str(filename):
     """
