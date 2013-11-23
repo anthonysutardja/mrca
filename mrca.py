@@ -184,6 +184,7 @@ class EM(object):
     @time_it
     def iteration(self):
         """Generate a new theta."""
+        print self.theta.m
         states = self.theta.m.keys()
         
         # do all the actual crap here...
@@ -303,15 +304,40 @@ class Decoding(object):
     def __init__(self, observations, params):
         self.x = observations
         self.theta = params
+        self.forward = forward_algorithm(self.theta, self.x)
+        self.backward = backward_algorithm(self.theta, self.x)
+        self.lhood = self.calculate_likelihood()
+
+    def calculate_likelihood(self, theta=None):
+        """Return the log-likelihood of the data given theta."""
+        states = self.theta.m.keys()
+        D = max([self.forward[k][-1] for k in states])
+
+        return log(sum([e**(self.forward[k][-1] - D) for k in states])) + D
+
+    def posterior(self):
+        states = self.theta.m.keys()
+        ck = lambda x: x[1]
+        results = []
+        for t in range(len(self.x)):
+            q, prob = max([(k, self.calc_marg(k, t)) for k in states], key=ck)
+            results.append(q)
+        return results
+
+    def calc_marg(self, k, t):
+        return e**(self.f(k)[t] + self.b(k)[t] - self.lhood)
 
     def viterbi(self):
         return []
 
-    def marginal(self):
-        return []
+    def f(self, k):
+        return self.forward[k]
+
+    def b(self, k):
+        return self.backward[k]
 
 
-def main():
+def run_mu_estimation():
     print '================================='
     print ' Loading data...'
     sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
@@ -321,6 +347,13 @@ def main():
     theta = em.estimate_params()
     print theta
     print '================================='
+
+def run_mu_decoding():
+    print '================================='
+    sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
+    obs = observe_differences(sequences[0], sequences[1])
+    decode = Decoding(obs, INITIAL_MU_PARAMS)
+    return decode.posterior()
 
 
 if __name__ == '__main__':
