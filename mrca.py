@@ -8,6 +8,8 @@ Kevin Tee
 """
 from params import Theta
 from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
+from threading import Thread
+from multiprocessing.pool import ThreadPool
 
 from math import e
 from math import log
@@ -25,6 +27,8 @@ done with the following:
 >>> theta.e[3]['D']  # emission probability of different char while in state 3
 0.00415567
 """
+
+pool = ThreadPool(processes=1)
 
 def read_fasta_sequences_to_str(filename):
     """
@@ -132,7 +136,7 @@ def backward_algorithm(theta, observations):
 
 class EM(object):
 
-    def __init__(self, observ, init_params, thresh=1e-5, max_iter=100):
+    def __init__(self, observ, init_params, thresh=1e-5, max_iter=2):
         self.x = observ
         self.thresh = thresh
         # let self.theta be a dictionary of params
@@ -147,6 +151,7 @@ class EM(object):
         old_lhood = float('-inf')
         self.process_forward_algorithm()
         self.process_backward_algorithm()
+        self.table_join()
         self.lhood = self.calculate_likelihood()
 
         # iterate until improvement meets threshold
@@ -161,6 +166,7 @@ class EM(object):
             # Update forward and backward tables
             self.process_forward_algorithm()
             self.process_backward_algorithm()
+            self.table_join()
             self.lhood = self.calculate_likelihood()
             i += 1
 
@@ -169,6 +175,7 @@ class EM(object):
     def check_improvement(self, new_lhood, old_lhood):
         return new_lhood - old_lhood > self.thresh
 
+    @time_it
     def iteration(self):
         """Generate a new theta."""
         states = self.theta.m.keys()
@@ -184,11 +191,19 @@ class EM(object):
             marginal[state] = val / marginal_norm
 
         transition = {}
+        async_results = []
+        for i in states:
+            for j in states:
+                async_results.append(
+                    pool.apply_async(self.calculate_transition, (i,j))
+                )
+
         for i in states:
             transition[i] = {}
             trans_norm = 0
             for j in states:
-                transition[i][j] = self.calculate_transition(i, j)
+                transition[i][j] = async_results.pop(0).get()
+                #transition[i][j] = self.calculate_transition(i,j)
                 trans_norm += transition[i][j]
             # need to normalize
             for j, val in transition[i].items():
@@ -247,10 +262,18 @@ class EM(object):
         return log(sum([e**(forward[k][-1] - D) for k in states])) + D
 
     def process_forward_algorithm(self):
-        self.forward = forward_algorithm(self.theta, self.x)
+        self.async_forward = pool.apply_async(
+            forward_algorithm, (self.theta, self.x)
+        )
 
     def process_backward_algorithm(self):
-        self.backward = backward_algorithm(self.theta, self.x)
+        self.async_backward = pool.apply_async(
+            backward_algorithm, (self.theta, self.x)
+        )
+
+    def table_join(self):
+        self.forward = self.async_forward.get()
+        self.backward = self.async_backward.get()
 
     def f(self, state):
         return self.forward[state]
