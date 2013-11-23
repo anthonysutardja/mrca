@@ -197,13 +197,24 @@ class EM(object):
             marginal[state] = val / marginal_norm
 
         transition = {}
+
+        # Run these calculations asynchronously
         async_results = []
         for i in states:
             for j in states:
                 async_results.append(
                     pool.apply_async(self.calculate_transition, (i,j))
                 )
+        async_e_results = []
+        symbols = self.theta.e[states[0]].keys()
 
+        for k in states:
+            for symbol in symbols:
+                async_e_results.append(
+                    pool.apply_async(self.calculate_emission, (k, symbol))
+                )
+
+        # Gather the asynchronous results
         for i in states:
             transition[i] = {}
             trans_norm = 0
@@ -216,18 +227,12 @@ class EM(object):
                 transition[i][j] = val / trans_norm
 
         emission = {}
-        symbols = self.theta.e[states[0]].keys()
-        async_results = []
-        for k in states:
-            for symbol in symbols:
-                async_results.append(
-                    pool.apply_async(self.calculate_emission, (k, symbol))
-                )
+
         for k in states:
             emission[k] = {}
             emission_norm = 0
             for symbol in symbols:
-                emission[k][symbol] = async_results.pop(0).get()
+                emission[k][symbol] = async_e_results.pop(0).get()
                 emission_norm += emission[k][symbol]
             # need to normalize
             for symbol, val in emission[k].items():
