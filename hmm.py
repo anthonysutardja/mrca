@@ -213,6 +213,7 @@ class EM(object):
         self.backward = backward_algorithm(self.theta, self.x)
 
     def join_forward_backward(self):
+        """Attempted use for multiprocessing joining. Incomplete."""
         #self.forward = self.async_forward.get()
         pass
 
@@ -240,6 +241,7 @@ class Decoding(object):
         return log(sum([e**(self.forward[k][-1] - D) for k in states])) + D
 
     def posterior(self):
+        """Returns the marginal posterior decoded path."""
         states = self.theta.m.keys()
         ck = lambda x: x[1]
         results = []
@@ -249,15 +251,20 @@ class Decoding(object):
         return results
 
     def calc_marg(self, k, t):
+        """Helper method for calculating each posterior probability."""
         return e**(self.f(k)[t] + self.b(k)[t] - self.lhood)
 
     def viterbi(self):
+        """Returns the viterbi decoded path."""
+        # TODO(kevintee): Return the viterbi decoded path (list of states)
         return []
 
     def f(self, k):
+        """Convenience function for accessing forward table."""
         return self.forward[k]
 
     def b(self, k):
+        """Convenience function for accessing backward table."""
         return self.backward[k]
 
 

@@ -25,6 +25,14 @@ done with the following:
 0.00415567
 """
 
+"""
+STATE_TO_TIME, SEQUENCE_TYPE_TO_THETA, SEQUENCE_TYPE_TO_THETA are all constants
+that are specific to the tmrca problem.
+"""
+
+"""
+STATE_TO_TIME is translates states k in {1,2,3,4} to it's respective times.
+"""
 STATE_TO_TIME = {
     1: 0.32,
     2: 1.75,
@@ -32,9 +40,33 @@ STATE_TO_TIME = {
     4: 9.40
 }
 
+"""
+SEQUENCE_TYPE_TO_FILE provides the correct paths to the data files.
+"""
+SEQUENCE_TYPE_TO_FILE = {
+    'mu': 'data/sequences_mu.fasta',
+    '2mu': 'data/sequences_2mu.fasta',
+    '5mu': 'data/sequences_5mu.fasta',
+}
+
+"""
+SEQUENCE_TYPE_TO_THETA provides the correct variable names for the init params.
+"""
+SEQUENCE_TYPE_TO_THETA = {
+    'mu': INITIAL_MU_PARAMS,
+    '2mu': INITIAL_2MU_PARAMS,
+    '5mu': INITIAL_5MU_PARAMS,
+}
+
 
 def convert_state_seq_to_time_seq(q_sequence):
+    """
+    Returns a list of times converted from state numbers.
+    >>> convert_state_seq_to_time_seq([1, 2, 2])
+    [0.32, 1.75, 1.75]
+    """
     return [STATE_TO_TIME[q] for q in q_sequence]
+
 
 def read_fasta_sequences_to_str(filename):
     """
@@ -94,24 +126,16 @@ def observe_differences(seq1, seq2):
     return observations
 
 
-
-SEQUENCE_TYPE_TO_FILE = {
-    'mu': 'data/sequences_mu.fasta',
-    '2mu': 'data/sequences_2mu.fasta',
-    '5mu': 'data/sequences_5mu.fasta',
-}
-
-
-SEQUENCE_TYPE_TO_THETA = {
-    'mu': INITIAL_MU_PARAMS,
-    '2mu': INITIAL_2MU_PARAMS,
-    '5mu': INITIAL_5MU_PARAMS,
-}
-
-
 class TSequence(object):
 
     def __init__(self, s):
+        """
+        Initialize TSequence to the dataset you are interested in investigating
+        Can only be called with the following strings `s`:
+        'mu', '2mu', or '5mu'
+
+        e.g. TSequence('mu')
+        """
         if s not in SEQUENCE_TYPE_TO_THETA:
             raise Error('Invalid mu type')
 
@@ -119,23 +143,27 @@ class TSequence(object):
         self.obs = observe_differences(self.sequences[0], self.sequences[1])
         self.theta = SEQUENCE_TYPE_TO_THETA[s]
         self.estimate = None
+        self.likelihood = None
 
     def initial_decoding(self):
+        """Performs marginal posterior decoding and viterbi decoding."""
         decode = Decoding(self.obs, self.theta)
         # need to also return Viterbi
-        return decode.posterior()
+        return decode.posterior(), decode.viterbi()
 
-    def estimate_params(self):
-        em = EM(self.obs, self.theta, max_iter=10)
+    def estimate_params(self, thresh=1e-3, max_iter=10):
+        """Performs EM on this dataset and initial parameters."""
+        em = EM(self.obs, self.theta, thresh=thresh, max_iter=max_iter)
         self.estimate = em.estimate_params()
+        self.likelihood = em.lhood
 
     def estimate_decoding(self):
+        """Must run estimate_params() on object first."""
         if self.estimate == None:
             raise Error('Must run estimate_params first!')
         decode = Decoding(self.obs, self.estimate)
         # need to also return viterbi
         return decode.posterior()
-
 
 
 if __name__ == '__main__':
