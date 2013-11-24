@@ -369,23 +369,23 @@ class TSequence(object):
             raise Error('Invalid mu type')
 
         self.sequences = read_fasta_sequences_to_str(SEQUENCE_TYPE_TO_FILE[s])
-        self.obs = observe_differences(sequences[0], sequences[1])
+        self.obs = observe_differences(self.sequences[0], self.sequences[1])
         self.theta = SEQUENCE_TYPE_TO_THETA[s]
         self.estimate = None
 
     def initial_decoding(self):
-        decode = Decoding(obs, self.theta)
+        decode = Decoding(self.obs, self.theta)
         # need to also return Viterbi
         return decode.posterior()
 
     def estimate_params(self):
-        em = EM(obs, self.theta, max_iter=10)
+        em = EM(self.obs, self.theta, max_iter=10)
         self.estimate = em.estimate_params()
 
     def estimate_decoding(self):
         if self.estimate == None:
             raise Error('Must run estimate_params first!')
-        decode = Decoding(obs, self.estimate)
+        decode = Decoding(self.obs, self.estimate)
         # need to also return viterbi
         return decode.posterior()
 
