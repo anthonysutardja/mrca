@@ -2,7 +2,7 @@ from params import Theta
 
 from math import e
 from math import log
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 from util import time_it
 
@@ -268,4 +268,4 @@ class Decoding(object):
 
 
 # Initialize worker pool
-pool = Pool(processes=3)
+pool = Pool(processes=cpu_count()-1)
