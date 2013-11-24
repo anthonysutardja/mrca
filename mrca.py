@@ -145,25 +145,25 @@ class TSequence(object):
         self.estimate = None
         self.likelihood = None
 
-    def initial_decoding(self):
-        """Performs marginal posterior decoding and viterbi decoding."""
-        decode = Decoding(self.obs, self.theta)
-        # need to also return Viterbi
-        return decode.posterior(), decode.viterbi()
-
     def estimate_params(self, thresh=1e-3, max_iter=10):
         """Performs EM on this dataset and initial parameters."""
         em = EM(self.obs, self.theta, thresh=thresh, max_iter=max_iter)
         self.estimate = em.estimate_params()
         self.likelihood = em.lhood
 
-    def estimate_decoding(self):
+    def decode_initial(self):
+        """Performs marginal posterior decoding and viterbi decoding."""
+        decode = Decoding(self.obs, self.theta)
+        # need to also return Viterbi
+        return decode.posterior(), decode.viterbi()
+
+    def decode_estimate(self):
         """Must run estimate_params() on object first."""
         if self.estimate == None:
             raise Error('Must run estimate_params first!')
         decode = Decoding(self.obs, self.estimate)
         # need to also return viterbi
-        return decode.posterior()
+        return decode.posterior(), decode.viterbi()
 
 
 if __name__ == '__main__':

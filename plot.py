@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mrca import run_mu_initial_decoding
-from mrca import run_mu_estimate_decoding
 from mrca import convert_state_seq_to_time_seq
+from mrca import TSequence
 
 def read_true_tmrca():
     with open('data/true_tmrca.txt') as f:
@@ -14,9 +13,17 @@ def read_true_tmrca():
 TRUE_TMRCA_SEQ = read_true_tmrca()
 
 
-def plot_initial_mu():
+def plot_initial(variant, sequence=None):
+    if variant not in ('mu', '2mu', '5mu'):
+        raise Error('plot_initial not ran with correct variant')
+    if sequence:
+        posterior = sequences[0]
+        viterbi = sequences[1]
+    else:
+        t = TSequence(variant)
+        posterior, viterbi = t.decode_initial()
     posterior_decoding = convert_state_seq_to_time_seq(
-        run_mu_initial_decoding()
+        posterior
     )
     line1 = plt.plot(posterior_decoding)
     true_line = plt.plot(TRUE_TMRCA_SEQ)
@@ -26,9 +33,19 @@ def plot_initial_mu():
     )
     plt.show()
 
-def plot_estimate_mu():
+
+def plot_estimate(variant, sequences=None):
+    if variant not in ('mu', '2mu', '5mu'):
+        raise Error('plot_estimate not ran with correct variant')
+    if sequences:
+        posterior = sequences[0]
+        viterbi = sequences[1]
+    else:
+        t = TSequence(variant)
+        t.estimate_params(max_iter=10)
+        posterior, viterbi = t.decode_estimate()
     posterior_decoding = convert_state_seq_to_time_seq(
-        run_mu_estimate_decoding()
+        posterior
     )
     line1 = plt.plot(posterior_decoding)
     true_line = plt.plot(TRUE_TMRCA_SEQ)
