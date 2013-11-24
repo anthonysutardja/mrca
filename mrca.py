@@ -348,30 +348,47 @@ class Decoding(object):
         return self.backward[k]
 
 
-def run_mu_estimation():
-    print '================================='
-    print ' Loading data...'
-    sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
-    obs = observe_differences(sequences[0], sequences[1])
-    print ' Running EM for mu dataset...'
-    em = EM(obs, INITIAL_MU_PARAMS)
-    theta = em.estimate_params()
-    print theta
-    print '================================='
+SEQUENCE_TYPE_TO_FILE = {
+    'mu': 'data/sequences_mu.fasta',
+    '2mu': 'data/sequences_2mu.fasta',
+    '5mu': 'data/sequences_5mu.fasta',
+}
 
-def run_mu_initial_decoding():
-    sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
-    obs = observe_differences(sequences[0], sequences[1])
-    decode = Decoding(obs, INITIAL_MU_PARAMS)
-    return decode.posterior()
 
-def run_mu_estimate_decoding():
-    sequences = read_fasta_sequences_to_str('data/sequences_mu.fasta')
-    obs = observe_differences(sequences[0], sequences[1])
-    em = EM(obs, INITIAL_MU_PARAMS, max_iter=10)
-    theta = em.estimate_params()
-    decode = Decoding(obs, theta)
-    return decode.posterior()
+SEQUENCE_TYPE_TO_THETA = {
+    'mu': INITIAL_MU_PARAMS,
+    '2mu': INITIAL_2MU_PARAMS,
+    '5mu': INITIAL_5MU_PARAMS,
+}
+
+
+class TSequence(object):
+
+    def __init__(self, s):
+        if s not in SEQUENCE_TYPE_TO_THETA:
+            raise Error('Invalid mu type')
+
+        self.sequences = read_fasta_sequences_to_str(SEQUENCE_TYPE_TO_FILE[s])
+        self.obs = observe_differences(sequences[0], sequences[1])
+        self.theta = SEQUENCE_TYPE_TO_THETA[s]
+        self.estimate = None
+
+    def initial_decoding(self):
+        decode = Decoding(obs, self.theta)
+        # need to also return Viterbi
+        return decode.posterior()
+
+    def estimate_params(self):
+        em = EM(obs, self.theta, max_iter=10)
+        self.estimate = em.estimate_params()
+
+    def estimate_decoding(self):
+        if self.estimate == None:
+            raise Error('Must run estimate_params first!')
+        decode = Decoding(obs, self.estimate)
+        # need to also return viterbi
+        return decode.posterior()
+
 
 pool = Pool(processes=3)
 
