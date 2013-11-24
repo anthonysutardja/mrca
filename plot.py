@@ -13,7 +13,7 @@ def read_true_tmrca():
 TRUE_TMRCA_SEQ = read_true_tmrca()
 
 
-def plot_initial(variant, sequence=None):
+def plot_initial(variant, sequences=None):
     if variant not in ('mu', '2mu', '5mu'):
         raise Error('plot_initial not ran with correct variant')
     if sequence:
