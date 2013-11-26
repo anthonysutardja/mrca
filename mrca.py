@@ -170,6 +170,9 @@ class TSequence(object):
         # need to also return viterbi
         return decode.posterior(), decode.viterbi(), decode.expectation()
 
+    def theta_to_str(self):
+        return ''
+
 
 if __name__ == '__main__':
     pass
