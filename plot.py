@@ -26,20 +26,24 @@ def plot_initial(variant, sequences=None):
     if sequences:
         posterior = sequences[0]
         viterbi = sequences[1]
+        mean = sequences[2]
     else:
         t = TSequence(variant)
-        posterior, viterbi = t.decode_initial()
+        posterior, viterbi, mean = t.decode_initial()
     posterior_decoding = convert_state_seq_to_time_seq(
         posterior
     )
+
+    # perform plotting
     line1 = plt.plot(posterior_decoding)
+    line3 = plt.plot(mean)
     if variant == '4mu':
         true_line = plt.plot(EX_TRUE_TMRCA_SEQ)
     else:
         true_line = plt.plot(TRUE_TMRCA_SEQ)
     plt.legend(
-        (line1[0], true_line[0]),
-        ('Initial Posterior', 'True Tmrca')
+        (line1[0], line3[0], true_line[0]),
+        ('Initial Posterior', 'Mean', 'True Tmrca')
     )
     plt.show()
 
@@ -50,20 +54,24 @@ def plot_estimate(variant, sequences=None):
     if sequences:
         posterior = sequences[0]
         viterbi = sequences[1]
+        mean = sequences[2]
     else:
         t = TSequence(variant)
-        t.estimate_params(max_iter=10)
-        posterior, viterbi = t.decode_estimate()
+        t.estimate_params(max_iter=15)
+        posterior, viterbi, mean = t.decode_estimate()
     posterior_decoding = convert_state_seq_to_time_seq(
         posterior
     )
+
+    # perform plotting
     line1 = plt.plot(posterior_decoding)
+    line3 = plt.plot(mean)
     if variant == '4mu':
         true_line = plt.plot(EX_TRUE_TMRCA_SEQ)
     else:
         true_line = plt.plot(TRUE_TMRCA_SEQ)
     plt.legend(
-        (line1[0], true_line[0]),
-        ('Estimate Posterior', 'True Tmrca')
+        (line1[0], line3[0], true_line[0]),
+        ('Estimate Posterior', 'Mean', 'True Tmrca')
     )
     plt.show()

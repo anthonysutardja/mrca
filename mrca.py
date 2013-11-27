@@ -160,7 +160,11 @@ class TSequence(object):
         """Performs marginal posterior decoding and viterbi decoding."""
         decode = Decoding(self.obs, self.theta)
         # need to also return Viterbi
-        return decode.posterior(), decode.viterbi(), decode.expectation()
+        return (
+            decode.posterior(),
+            decode.viterbi(),
+            decode.expectation(STATE_TO_TIME)
+        )
 
     def decode_estimate(self):
         """Must run estimate_params() on object first."""
@@ -168,10 +172,19 @@ class TSequence(object):
             raise Error('Must run estimate_params first!')
         decode = Decoding(self.obs, self.estimate)
         # need to also return viterbi
-        return decode.posterior(), decode.viterbi(), decode.expectation()
+        return (
+            decode.posterior(),
+            decode.viterbi(),
+            decode.expectation(STATE_TO_TIME)
+        )
 
     def theta_to_str(self):
-        return ''
+        output = [
+            'Estimated params',
+            '========================================',
+            'To be continued....',
+        ]
+        return '\n'.join(output)
 
 
 if __name__ == '__main__':

@@ -17,6 +17,12 @@ def reduce_method(m):
 copy_reg.pickle(types.MethodType, reduce_method)
 
 
+class MirrorDict():
+    """Helper dictionary for converting keys to keys."""
+    def __getitem__(self, k):
+        return k
+
+
 @time_it
 def forward_algorithm(theta, observations):
     """
@@ -262,9 +268,21 @@ class Decoding(object):
         """Helper method for calculating each posterior probability."""
         return e**(self.f(k)[t] + self.b(k)[t] - self.lhood)
 
-    def expectation(self):
+    def expectation(self, state_translate=None):
         """Mean expectation decoding."""
-        return []
+        if state_translate is None:
+            state_translate = MirrorDict()
+
+        states = self.theta.m.keys()
+        results = []
+
+        for t in range(len(self.x)):
+            expected_val = sum(
+                [state_translate[k] * self.calc_marg(k, t) for k in states]
+            )
+            results.append(expected_val)
+
+        return results
 
     def viterbi(self):
         """Returns the viterbi decoded path."""
