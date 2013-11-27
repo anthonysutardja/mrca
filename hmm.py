@@ -23,6 +23,10 @@ def forward_algorithm(theta, observations):
     Performs forward alg for computing table values of log P( x , q ).
 
     i.e. f_t(k) can be accessed by forward_table[k][t]
+
+    >>> from params import INITIAL_MU_PARAMS as theta
+    >>> forward_algorithm(theta, ['I', 'I']) # doctest: +NORMALIZE_WHITESPACE
+    {1: [-0.5059748019953626, -0.5063665242943428], 2: [-1.030513905267572, -1.0321808801629588], 3: [-3.2512367909004123, -3.2553989469755784], 4: [-7.533735747638008, -7.54221009961722]}
     """
     forward_table = {}
 
@@ -43,9 +47,14 @@ def forward_algorithm(theta, observations):
 
 @time_it
 def backward_algorithm(theta, observations):
-    """Performs backward alg for computing table values of log P( x | q )."""
+    """Performs backward alg for computing table values of log P( x | q ).
+
+    >>> from params import INITIAL_MU_PARAMS as theta
+    >>> backward_algorithm(theta, ['I', 'I'])
+    {1: [-0.00039172214931101825, 0], 2: [-0.001666975059797561, 0], 3: [-0.004162156899709083, 0], 4: [-0.008474351669876297, 0]}
+    """
     backward_table = {}
-    
+
     states = theta.m.keys()
     for k in states:
         backward_table[k] = [0] * len(observations)
@@ -109,7 +118,7 @@ class EM(object):
         """Generate a new theta."""
         print self.theta.m
         states = self.theta.m.keys()
-        
+
         # do all the actual crap here...
         marginal = {}
         marginal_norm = 0
