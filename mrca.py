@@ -8,6 +8,9 @@ Kevin Tee
 """
 from params import Theta
 from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
+
+from params import INITIAL_4MU_PARAMS
+
 from hmm import Decoding, EM
 
 from util import time_it
@@ -47,6 +50,7 @@ SEQUENCE_TYPE_TO_FILE = {
     'mu': 'data/sequences_mu.fasta',
     '2mu': 'data/sequences_2mu.fasta',
     '5mu': 'data/sequences_5mu.fasta',
+    '4mu': 'example/sequences_4mu.fasta',
 }
 
 """
@@ -55,6 +59,7 @@ SEQUENCE_TYPE_TO_THETA provides the correct variable names for the init params.
 SEQUENCE_TYPE_TO_THETA = {
     'mu': INITIAL_MU_PARAMS,
     '2mu': INITIAL_2MU_PARAMS,
+    '4mu': INITIAL_4MU_PARAMS,
     '5mu': INITIAL_5MU_PARAMS,
 }
 
@@ -145,7 +150,7 @@ class TSequence(object):
         self.estimate = None
         self.likelihood = None
 
-    def estimate_params(self, thresh=1e-3, max_iter=10):
+    def estimate_params(self, thresh=1e-3, max_iter=15):
         """Performs EM on this dataset and initial parameters."""
         em = EM(self.obs, self.theta, thresh=thresh, max_iter=max_iter)
         self.estimate = em.estimate_params()
@@ -155,7 +160,7 @@ class TSequence(object):
         """Performs marginal posterior decoding and viterbi decoding."""
         decode = Decoding(self.obs, self.theta)
         # need to also return Viterbi
-        return decode.posterior(), decode.viterbi()
+        return decode.posterior(), decode.viterbi(), decode.expectation()
 
     def decode_estimate(self):
         """Must run estimate_params() on object first."""
@@ -163,7 +168,10 @@ class TSequence(object):
             raise Error('Must run estimate_params first!')
         decode = Decoding(self.obs, self.estimate)
         # need to also return viterbi
-        return decode.posterior(), decode.viterbi()
+        return decode.posterior(), decode.viterbi(), decode.expectation()
+
+    def theta_to_str(self):
+        return ''
 
 
 if __name__ == '__main__':

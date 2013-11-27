@@ -10,13 +10,20 @@ def read_true_tmrca():
         return [float(line) for line in lines]
 
 
+def read_example_true_tmrca():
+    with open('example/true_tmrca_test.txt') as f:
+        lines = f.readlines()
+        return [float(line) for line in lines]
+
+
 TRUE_TMRCA_SEQ = read_true_tmrca()
+EX_TRUE_TMRCA_SEQ = read_example_true_tmrca()
 
 
 def plot_initial(variant, sequences=None):
-    if variant not in ('mu', '2mu', '5mu'):
+    if variant not in ('mu', '2mu', '4mu', '5mu'):
         raise Error('plot_initial not ran with correct variant')
-    if sequence:
+    if sequences:
         posterior = sequences[0]
         viterbi = sequences[1]
     else:
@@ -26,7 +33,10 @@ def plot_initial(variant, sequences=None):
         posterior
     )
     line1 = plt.plot(posterior_decoding)
-    true_line = plt.plot(TRUE_TMRCA_SEQ)
+    if variant == '4mu':
+        true_line = plt.plot(EX_TRUE_TMRCA_SEQ)
+    else:
+        true_line = plt.plot(TRUE_TMRCA_SEQ)
     plt.legend(
         (line1[0], true_line[0]),
         ('Initial Posterior', 'True Tmrca')
@@ -35,7 +45,7 @@ def plot_initial(variant, sequences=None):
 
 
 def plot_estimate(variant, sequences=None):
-    if variant not in ('mu', '2mu', '5mu'):
+    if variant not in ('mu', '2mu', '4mu', '5mu'):
         raise Error('plot_estimate not ran with correct variant')
     if sequences:
         posterior = sequences[0]
@@ -48,7 +58,10 @@ def plot_estimate(variant, sequences=None):
         posterior
     )
     line1 = plt.plot(posterior_decoding)
-    true_line = plt.plot(TRUE_TMRCA_SEQ)
+    if variant == '4mu':
+        true_line = plt.plot(EX_TRUE_TMRCA_SEQ)
+    else:
+        true_line = plt.plot(TRUE_TMRCA_SEQ)
     plt.legend(
         (line1[0], true_line[0]),
         ('Estimate Posterior', 'True Tmrca')

@@ -262,6 +262,10 @@ class Decoding(object):
         """Helper method for calculating each posterior probability."""
         return e**(self.f(k)[t] + self.b(k)[t] - self.lhood)
 
+    def expectation(self):
+        """Mean expectation decoding."""
+        return []
+
     def viterbi(self):
         """Returns the viterbi decoded path."""
         # TODO(kevintee): Return the viterbi decoded path (list of states)
