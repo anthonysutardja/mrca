@@ -1,5 +1,6 @@
 from params import Theta
 
+from numpy import argmax
 from math import e
 from math import log
 from multiprocessing import Pool, cpu_count
@@ -287,7 +288,35 @@ class Decoding(object):
     def viterbi(self):
         """Returns the viterbi decoded path."""
         # TODO(kevintee): Return the viterbi decoded path (list of states)
-        return []
+        viterbi = []
+        forward_table = {}
+        backpointers = {}
+
+        states = self.theta.m.keys()
+        for t in range(len(self.x)):
+            for k in states:
+                if t == 0:
+                    forward_table[k] = [log(self.theta.e[k][self.x[t]]) + \
+                        log(self.theta.m[k])]
+                    backpointers[k] = [0]
+                else:
+                    offset = max([forward_table[i][t - 1] for i in states])
+                    forward_table[k].append(log(self.theta.e[k][self.x[t]]) + \
+                        offset + log(max([e**(forward_table[i][t - 1] - offset) * \
+                        self.theta.a[i][k] for i in states])))
+                    backpointers[k].append(argmax([e**(forward_table[i][t - 1] - \
+                            offset) * self.theta.a[i][k] for i in states]))
+
+        pointer = None
+        for t in reversed(range(len(self.x))):
+            if t == len(self.x) - 1:
+                viterbi.append(states[argmax(forward_table[t])])
+                pointer = argmax(forward_table[t])
+            elif t > 0:
+                viterbi = [states[backpointers[k][t]]] + viterbi
+                pointer = backpointers[k][t]
+
+        return viterbi
 
     def f(self, k):
         """Convenience function for accessing forward table."""
