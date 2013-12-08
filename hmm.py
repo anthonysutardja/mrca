@@ -313,8 +313,8 @@ class Decoding(object):
                 viterbi.append(states[argmax(forward_table[t])])
                 pointer = argmax(forward_table[t])
             elif t > 0:
-                viterbi = [states[backpointers[k][t]]] + viterbi
-                pointer = backpointers[k][t]
+                viterbi = [states[backpointers[pointer][t]]] + viterbi
+                pointer = backpointers[pointer][t]
 
         return viterbi
 
