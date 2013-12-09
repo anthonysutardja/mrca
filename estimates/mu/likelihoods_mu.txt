@@ -1,0 +1,3 @@
+# Likelihood of initial (first) and estimated (last)
+-633.627452
+-628.989277

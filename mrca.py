@@ -150,7 +150,7 @@ class TSequence(object):
         self.likelihood = None
         self.initial_likelihood = None
 
-    def estimate_params(self, thresh=1e-3, max_iter=15):
+    def estimate_params(self, thresh=1e-5, max_iter=15):
         """Performs EM on this dataset and initial parameters."""
         em = EM(self.obs, self.theta, thresh=thresh, max_iter=max_iter)
         self.estimate = em.estimate_params()

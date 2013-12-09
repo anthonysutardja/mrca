@@ -81,7 +81,7 @@ def backward_algorithm(theta, observations):
 
 class EM(object):
 
-    def __init__(self, observ, init_params, thresh=1e-3, max_iter=50):
+    def __init__(self, observ, init_params, thresh=1e-5, max_iter=50):
         self.x = observ
         self.thresh = thresh
         # let self.theta be a dictionary of params
