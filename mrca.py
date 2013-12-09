@@ -185,41 +185,40 @@ class TSequence(object):
 
         output = []
         output.extend([
-            'Marginal Probabilities',
-            '========================================',
+            'Marginal Probabilities\n',
+            '========================================\n',
         ])
 
         for k in range(1, 5):
             output.append('{:e}'.format(self.estimate.m[k]))
+            output.append('\n')
 
         output.append('\n')
 
         output.extend([
-            'Transition Probabilities',
-            '========================================',
+            'Transition Probabilities\n',
+            '========================================\n',
         ])
 
         for i in range(1, 5):
             probs = []
             for j in range(1, 5):
                 probs.append('{:e}'.format(self.estimate.a[i][j]))
-            output.append(' '.join(probs))
+            output.append(' '.join(probs) + '\n')
 
         output.append('\n')
 
         output.extend([
-            'Emission Probabilities',
-            '========================================',
+            'Emission Probabilities\n',
+            '========================================\n',
         ])
         for k in range(1,5):
             probs = []
             for symbol in ['I', 'D']:
                 probs.append('{:e}'.format(self.estimate.e[k][symbol]))
-            output.append(' '.join(probs))
+            output.append(' '.join(probs) + '\n')
 
-        output.append('\n')
-
-        return '\n'.join(output)
+        return ''.join(output) + '\n'
 
     def decoding_to_str(self, flag):
         if flag not in ('initial', 'estimate'):
@@ -230,10 +229,9 @@ class TSequence(object):
         else:
             posterior, viterbi, expectation = self.decode_estimate()
 
-        print len(posterior), len(viterbi), len(expectation)
         lines = []
         lines.append(
-            '#viterbi, posterior, mean'
+            '# Viterbi_decoding posterior_decoding posterior_mean'
         )
         for i in range(len(posterior)):
             lines.append(
@@ -243,7 +241,7 @@ class TSequence(object):
                     expectation[i]
                 )
             )
-        return '\n'.join(lines)
+        return '\n'.join(lines) + '\n'
 
     def likelihood_to_str(self):
         if self.likelihood == None or self.initial_likelihood == None:
@@ -251,10 +249,9 @@ class TSequence(object):
         lines = [
             '# Likelihood of initial (first) and estimated (last)',
             '%.6f' % self.initial_likelihood,
-            '%.6f' % self.likelihood,
-            '\n'
+            '%.6f' % self.likelihood
         ]
-        return '\n'.join(lines)
+        return '\n'.join(lines) + '\n'
 
 def main():
     parser = ArgumentParser(description='Parser for Arguments')
@@ -274,9 +271,9 @@ def main():
     args = parser.parse_args()
 
     tmrca = TSequence(args.initial_param_file, args.fasta_file)
-    #with open(args.output_initial_decoding, 'w') as f:
-    #    f.write(tmrca.decoding_to_str('initial'))
-    #    f.close()
+    with open(args.output_initial_decoding, 'w') as f:
+        f.write(tmrca.decoding_to_str('initial'))
+        f.close()
 
     tmrca.estimate_params(max_iter=15)
 
@@ -284,9 +281,9 @@ def main():
         f.write(tmrca.theta_to_str())
         f.close()
 
-    #with open(args.output_estimate_decoding, 'w') as f:
-    #    f.write(tmrca.decoding_to_str('estimate'))
-    #    f.close()
+    with open(args.output_estimate_decoding, 'w') as f:
+        f.write(tmrca.decoding_to_str('estimate'))
+        f.close()
 
     with open(args.output_likelihood, 'w') as f:
         f.write(tmrca.likelihood_to_str())
