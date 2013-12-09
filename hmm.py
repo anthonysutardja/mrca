@@ -310,11 +310,12 @@ class Decoding(object):
         pointer = None
         for t in reversed(range(len(self.x))):
             if t == len(self.x) - 1:
-                viterbi.append(states[argmax(forward_table[t])])
-                pointer = argmax(forward_table[t])
+                values = [forward_table[i][t] for i in states]
+                viterbi.append(states[argmax(values)])
+                pointer = argmax(values)
             elif t > 0:
                 viterbi = [states[backpointers[pointer][t]]] + viterbi
-                pointer = backpointers[pointer][t]
+                pointer = states[backpointers[pointer][t]]
 
         return viterbi
 
