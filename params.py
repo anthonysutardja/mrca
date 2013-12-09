@@ -107,3 +107,37 @@ INITIAL_4MU_PARAMS = Theta(
         4: {'I': 0.991548, 'D': 0.008452},
     }
 )
+
+
+def parse_params(file_name):
+    with open(file_name) as f:
+        lines = [line.strip() for line in f.readlines()]
+        lines = [line for line in lines \
+            if len(line) != 0 and line[0] != '#']
+
+        # Parse marginal probabilities
+        m = {}
+        for i in range(4):
+            state, prob = lines.pop(0).split()
+            m[int(state)] = float(prob)
+
+        # Parse transitional probabilities
+        t = {}
+        for i in range(1, 5):
+            a, b, c, d = lines.pop(0).split()
+            t[i] = {}
+
+            t[i][1] = float(a)
+            t[i][2] = float(b)
+            t[i][3] = float(c)
+            t[i][4] = float(d)
+
+        # Parse emission probabilities
+        e = {}
+        for i in range(1,5):
+            k, I, D = lines.pop(0).split()
+            e[int(k)] = {}
+            e[int(k)]['I'] = float(I)
+            e[int(k)]['D'] = float(D)
+        
+        return Theta(m, t, e)

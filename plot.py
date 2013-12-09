@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 
 from mrca import convert_state_seq_to_time_seq
 from mrca import TSequence
+from mrca import SEQUENCE_TYPE_TO_THETA
+from mrca import SEQUENCE_TYPE_TO_FILE
 
 def read_true_tmrca():
     with open('data/true_tmrca.txt') as f:
@@ -28,22 +30,25 @@ def plot_initial(variant, sequences=None):
         viterbi = sequences[1]
         mean = sequences[2]
     else:
-        t = TSequence(variant)
+        t = TSequence(
+            SEQUENCE_TYPE_TO_THETA[variant],
+            SEQUENCE_TYPE_TO_FILE[variant]
+        )
         posterior, viterbi, mean = t.decode_initial()
-    posterior_decoding = convert_state_seq_to_time_seq(
-        posterior
-    )
+    posterior_decoding = convert_state_seq_to_time_seq(posterior)
+    viterbi_decoding = convert_state_seq_to_time_seq(viterbi)
 
     # perform plotting
     line1 = plt.plot(posterior_decoding)
+    line2 = plt.plot(viterbi_decoding)
     line3 = plt.plot(mean)
     if variant == '4mu':
         true_line = plt.plot(EX_TRUE_TMRCA_SEQ)
     else:
         true_line = plt.plot(TRUE_TMRCA_SEQ)
     plt.legend(
-        (line1[0], line3[0], true_line[0]),
-        ('Initial Posterior', 'Mean', 'True Tmrca')
+        (line1[0], line2[0], line3[0], true_line[0]),
+        ('Initial Posterior', 'Viterbi', 'Mean', 'True Tmrca')
     )
     plt.show()
 
@@ -56,22 +61,25 @@ def plot_estimate(variant, sequences=None):
         viterbi = sequences[1]
         mean = sequences[2]
     else:
-        t = TSequence(variant)
+        t = TSequence(
+            SEQUENCE_TYPE_TO_THETA[variant],
+            SEQUENCE_TYPE_TO_FILE[variant]
+        )
         t.estimate_params(max_iter=15)
         posterior, viterbi, mean = t.decode_estimate()
-    posterior_decoding = convert_state_seq_to_time_seq(
-        posterior
-    )
+    posterior_decoding = convert_state_seq_to_time_seq(posterior)
+    viterbi_decoding = convert_state_seq_to_time_seq(viterbi)
 
     # perform plotting
     line1 = plt.plot(posterior_decoding)
+    line2 = plt.plot(viterbi_decoding)
     line3 = plt.plot(mean)
     if variant == '4mu':
         true_line = plt.plot(EX_TRUE_TMRCA_SEQ)
     else:
         true_line = plt.plot(TRUE_TMRCA_SEQ)
     plt.legend(
-        (line1[0], line3[0], true_line[0]),
-        ('Estimate Posterior', 'Mean', 'True Tmrca')
+        (line1[0], line2[0], line3[0], true_line[0]),
+        ('Estimate Posterior', 'Viterbi', 'Mean', 'True Tmrca')
     )
     plt.show()

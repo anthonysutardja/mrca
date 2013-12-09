@@ -6,10 +6,12 @@ HMM implementation for finding most recent common ancestor.
 Anthony Sutardja
 Kevin Tee
 """
+from argparse import ArgumentParser
 from params import Theta
 from params import INITIAL_MU_PARAMS, INITIAL_2MU_PARAMS, INITIAL_5MU_PARAMS
 
 from params import INITIAL_4MU_PARAMS
+from params import parse_params
 
 from hmm import Decoding, EM
 
@@ -57,10 +59,10 @@ SEQUENCE_TYPE_TO_FILE = {
 SEQUENCE_TYPE_TO_THETA provides the correct variable names for the init params.
 """
 SEQUENCE_TYPE_TO_THETA = {
-    'mu': INITIAL_MU_PARAMS,
-    '2mu': INITIAL_2MU_PARAMS,
-    '4mu': INITIAL_4MU_PARAMS,
-    '5mu': INITIAL_5MU_PARAMS,
+    'mu': 'data/initial_parameters_mu.txt',
+    '2mu': 'data/initial_parameters_2mu.txt',
+    '4mu': 'example/initial_parameters_4mu.txt',
+    '5mu': 'data/initial_parameters_5mu.txt',
 }
 
 
@@ -133,7 +135,7 @@ def observe_differences(seq1, seq2):
 
 class TSequence(object):
 
-    def __init__(self, s):
+    def __init__(self, initial_param_file, fasta_file):
         """
         Initialize TSequence to the dataset you are interested in investigating
         Can only be called with the following strings `s`:
@@ -141,12 +143,9 @@ class TSequence(object):
 
         e.g. TSequence('mu')
         """
-        if s not in SEQUENCE_TYPE_TO_THETA:
-            raise Error('Invalid mu type')
-
-        self.sequences = read_fasta_sequences_to_str(SEQUENCE_TYPE_TO_FILE[s])
+        self.sequences = read_fasta_sequences_to_str(fasta_file)
         self.obs = observe_differences(self.sequences[0], self.sequences[1])
-        self.theta = SEQUENCE_TYPE_TO_THETA[s]
+        self.theta = parse_params(initial_param_file)
         self.estimate = None
         self.likelihood = None
 
@@ -179,13 +178,58 @@ class TSequence(object):
         )
 
     def theta_to_str(self):
-        output = [
-            'Estimated params',
+        if self.estimate == None:
+            raise Error('Must run estimate_params first!')
+
+        output = []
+        output.extend([
+            'Marginal Probabilities',
             '========================================',
-            'To be continued....',
-        ]
+        ])
+        output.extend([
+            'Transition Probabilities',
+            '========================================',
+        ])
+        output.extend([
+            'Emission Probabilities',
+            '========================================',
+        ])
         return '\n'.join(output)
 
+    def decoding_to_str(self, flag):
+        if flag not in ('initial', 'estimate'):
+            raise Error('Must call on initial or estimate')
+
+        if flag == 'initial':
+            posterior, viterbi, expectation = self.decode_initial()
+        else:
+            posterior, viterbi, expectation = self.decode_estimate()
+
+        lines = []
+        lines.append(
+            '#viterbi, posterior, mean'
+        )
+        for i in range(len(posterior)):
+            lines.append(
+                '%.2f %.2f %.5f' % (
+                    STATE_TO_TIME[viterbi[i]],
+                    STATE_TO_TIME[posterior[i]],
+                    expectation[i]
+                )
+            )
+        return '\n'.join(lines)
+
+def main():
+    parser = ArgumentParser(description='Parser for Arguments')
+    parser.add_argument('initial_param_file', type=str, metavar='input1',
+                        help='initial input file')
+    parser.add_argument('fasta_file', type=str, metavar='input2',
+                        help='input fasta sequence file')
+    parser.add_argument('output_estimate', type=str, metavar='output1',
+                        help='output file for estimated paramters')
+    parser.add_argument('output_decoding', type=str, metavar='output2',
+                        help='output file for estimated decodings')
+    args = parser.parse_args()
 
 if __name__ == '__main__':
-    pass
+    main()
