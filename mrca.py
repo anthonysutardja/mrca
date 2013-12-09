@@ -148,12 +148,14 @@ class TSequence(object):
         self.theta = parse_params(initial_param_file)
         self.estimate = None
         self.likelihood = None
+        self.initial_likelihood = None
 
     def estimate_params(self, thresh=1e-3, max_iter=15):
         """Performs EM on this dataset and initial parameters."""
         em = EM(self.obs, self.theta, thresh=thresh, max_iter=max_iter)
         self.estimate = em.estimate_params()
         self.likelihood = em.lhood
+        self.initial_likelihood = em.calculate_likelihood(theta=self.theta)
 
     def decode_initial(self):
         """Performs marginal posterior decoding and viterbi decoding."""
@@ -186,14 +188,37 @@ class TSequence(object):
             'Marginal Probabilities',
             '========================================',
         ])
+
+        for k in range(1, 5):
+            output.append('{:e}'.format(self.estimate.m[k]))
+
+        output.append('\n')
+
         output.extend([
             'Transition Probabilities',
             '========================================',
         ])
+
+        for i in range(1, 5):
+            probs = []
+            for j in range(1, 5):
+                probs.append('{:e}'.format(self.estimate.a[i][j]))
+            output.append(' '.join(probs))
+
+        output.append('\n')
+
         output.extend([
             'Emission Probabilities',
             '========================================',
         ])
+        for k in range(1,5):
+            probs = []
+            for symbol in ['I', 'D']:
+                probs.append('{:e}'.format(self.estimate.e[k][symbol]))
+            output.append(' '.join(probs))
+
+        output.append('\n')
+
         return '\n'.join(output)
 
     def decoding_to_str(self, flag):
@@ -205,13 +230,14 @@ class TSequence(object):
         else:
             posterior, viterbi, expectation = self.decode_estimate()
 
+        print len(posterior), len(viterbi), len(expectation)
         lines = []
         lines.append(
             '#viterbi, posterior, mean'
         )
         for i in range(len(posterior)):
             lines.append(
-                '%.2f %.2f %.5f' % (
+                '%.2f %.2f %.6f' % (
                     STATE_TO_TIME[viterbi[i]],
                     STATE_TO_TIME[posterior[i]],
                     expectation[i]
@@ -219,17 +245,52 @@ class TSequence(object):
             )
         return '\n'.join(lines)
 
+    def likelihood_to_str(self):
+        if self.likelihood == None or self.initial_likelihood == None:
+            raise Error('Need to run estimate_params first')
+        lines = [
+            '# Likelihood of initial (first) and estimated (last)',
+            '%.6f' % self.initial_likelihood,
+            '%.6f' % self.likelihood,
+            '\n'
+        ]
+        return '\n'.join(lines)
+
 def main():
     parser = ArgumentParser(description='Parser for Arguments')
+
     parser.add_argument('initial_param_file', type=str, metavar='input1',
                         help='initial input file')
     parser.add_argument('fasta_file', type=str, metavar='input2',
                         help='input fasta sequence file')
     parser.add_argument('output_estimate', type=str, metavar='output1',
                         help='output file for estimated paramters')
-    parser.add_argument('output_decoding', type=str, metavar='output2',
+    parser.add_argument('output_initial_decoding', type=str, metavar='output2',
+                        help='output file for initial decodings')
+    parser.add_argument('output_estimate_decoding', type=str, metavar='output3',
                         help='output file for estimated decodings')
+    parser.add_argument('output_likelihood', type=str, metavar='output4',
+                        help='output file for log likelihoods')
     args = parser.parse_args()
+
+    tmrca = TSequence(args.initial_param_file, args.fasta_file)
+    #with open(args.output_initial_decoding, 'w') as f:
+    #    f.write(tmrca.decoding_to_str('initial'))
+    #    f.close()
+
+    tmrca.estimate_params(max_iter=15)
+
+    with open(args.output_estimate, 'w') as f:
+        f.write(tmrca.theta_to_str())
+        f.close()
+
+    #with open(args.output_estimate_decoding, 'w') as f:
+    #    f.write(tmrca.decoding_to_str('estimate'))
+    #    f.close()
+
+    with open(args.output_likelihood, 'w') as f:
+        f.write(tmrca.likelihood_to_str())
+        f.close()
 
 if __name__ == '__main__':
     main()
